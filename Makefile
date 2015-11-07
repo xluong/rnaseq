@@ -36,8 +36,8 @@ trim_opts = ILLUMINACLIP:$(trim_dir)/adapters/$(trim_adapter).fa:2:30:10 LEADING
 fq2fa = fastq_to_fasta
 fq2fa_args = -Q33 -i
 
-
 # Step 1: trim the fastq files
+.SECONDARY: $(fqtgz_files)
 $(fqt_dir)/%_trim.fastq.gz: $(fq_dir)/%.fastq.gz
 	mkdir -p $(fqt_dir)
 	java -jar $(trim_jar) SE -phred33 $< $@ $(trim_opts)
