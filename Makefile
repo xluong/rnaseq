@@ -26,7 +26,6 @@ fqtgz_files = $(foreach x,$(basenames),$(fqt_dir)/$(x)_trim.fastq.gz)
 fqt_files = $(foreach x,$(basenames),$(fqt_dir)/$(x)_trim.fastq)
 fa_files = $(foreach x,$(basenames),$(fa_dir)/$(x).fasta)
 
-
 # Trimmomatic
 trim_dir = $(abspath ./Trimmomatic-0.33)
 trim_jar = $(trim_dir)/trimmomatic-0.33.jar
@@ -60,7 +59,7 @@ $(fa_dir)/%.fasta: $(fqt_dir)/%_trim.fastq
 fqtrim: $(fqt_files)
 
 .PHONY: fa
-fqtrim: $(fa_files)
+fa: $(fa_files)
 
 .PHONY: clean
 clean:
