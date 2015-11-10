@@ -95,7 +95,7 @@ $(bam_dir)/%.bam: $(sam_dir)/%.sam $(faidx)
 	$(samtools) view -bt $(faidx) -o $@ $<
 
 # Step 4c: sort the bam files
-$(bam_dir)/%.sorted.bam: $(bam_dir)/$.bam
+$(bam_dir)/%.sorted.bam: $(bam_dir)/%.bam
 	$(samtools) sort $< $(bam_dir)/$*.sorted
 	$(samtools) index $(bam_dir)/$*.sorted.bam
 
