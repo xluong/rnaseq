@@ -5,7 +5,7 @@
 #
 # RNA Sequencing Makefile
 
-default: bam
+default: idxstats
 
 # Base directory
 base_dir = /Volumes/HayesLabHardDrive
@@ -32,6 +32,9 @@ sam_dir = $(base_dir)/sam
 # BAM directory
 bam_dir = $(base_dir)/bam
 
+# Index stats directory
+idxstats_dir = $(base_dir)/idxstats
+
 # Source fastq files
 fq_files = $(wildcard $(fq_dir)/*.fastq.gz)
 basenames = $(foreach x,$(fq_files),$(basename $(basename $(notdir $(x)))))
@@ -41,6 +44,7 @@ fa_files = $(foreach x,$(basenames),$(fa_dir)/$(x).fasta)
 sam_files = $(foreach x,$(basenames),$(sam_dir)/$(x).sam)
 bam_files = $(foreach x,$(basenames),$(bam_dir)/$(x).bam)
 sort_bam_files = $(foreach x,$(basenames),$(bam_dir)/$(x).sorted.bam)
+idxstats_files = $(foreach x,$(basenames),$(idxstats_dir)/$(x).txt)
 idx_files = $(addprefix $(idx_dir)/$(idx_base),$(idx_suffixes))
 
 # Trimmomatic
@@ -100,8 +104,8 @@ $(bam_dir)/%.sorted.bam: $(bam_dir)/%.bam
 	$(samtools) index $(bam_dir)/$*.sorted.bam
 
 # Step 4d: generate stats about the sorted bam files
-#	TODO
-#	$(samtools) idxstats $(bam_dir)/$*.sorted.bam
+$(idxstats_dir)/%.txt: $(bam_dir)/%.sorted.bam
+	$(samtools) idxstats $< > $@
 
 .PHONY: fqtrim
 fqtrim: $(fqt_files)
@@ -117,6 +121,9 @@ sam: $(sam_files)
 
 .PHONY: bam
 bam: $(sort_bam_files)
+
+.PHONY: idxstats
+idxstats: $(idxstats_files)
 
 .PHONY: clean
 clean:
