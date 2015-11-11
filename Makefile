@@ -105,6 +105,7 @@ $(bam_dir)/%.sorted.bam: $(bam_dir)/%.bam
 
 # Step 4d: generate stats about the sorted bam files
 $(idxstats_dir)/%.txt: $(bam_dir)/%.sorted.bam
+    mkdir -p $(idxstats_dir)
 	$(samtools) idxstats $< > $@
 
 .PHONY: fqtrim
