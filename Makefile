@@ -23,7 +23,7 @@ fa_dir = $(base_dir)/fasta
 idx_dir = $(base_dir)/indexes
 idx_base = XL_genome
 idx_suffixes = .1.bt2 .2.bt2 .3.bt2 .4.bt2 .rev.1.bt2 .rev.2.bt2
-idx_src = $(abspath ./src)/Xla_L6RMV10_cds.fa
+idx_src = $(base_dir)/Xla.v91.repeatMasked.fa
 faidx = $(idx_src).fai
 
 # SAM directory
