@@ -42,6 +42,7 @@ fqtgz_files = $(foreach x,$(basenames),$(fqt_dir)/$(x)_trim.fastq.gz)
 fqt_files = $(foreach x,$(basenames),$(fqt_dir)/$(x)_trim.fastq)
 fa_files = $(foreach x,$(basenames),$(fa_dir)/$(x).fasta)
 sam_files = $(foreach x,$(basenames),$(sam_dir)/$(x).sam)
+uniq_sam_files = $(foreach x,$(basenames),$(sam_dir)/$(x).unique.sam)
 bam_files = $(foreach x,$(basenames),$(bam_dir)/$(x).bam)
 sort_bam_files = $(foreach x,$(basenames),$(bam_dir)/$(x).sorted.bam)
 idxstats_files = $(foreach x,$(basenames),$(idxstats_dir)/$(x).txt)
@@ -108,6 +109,10 @@ $(idxstats_dir)/%.txt: $(bam_dir)/%.sorted.bam
 	mkdir -p $(idxstats_dir)
 	$(samtools) idxstats $< > $@
 
+# Step 4e: generate unique sam files
+$(sam_dir)/%.unique.sam: $(sam_dir)/%.sam
+	grep AS: $< | grep -v XS: > $@
+
 .PHONY: fqtrim
 fqtrim: $(fqt_files)
 
@@ -118,7 +123,7 @@ fa: $(fa_files)
 index: $(idx_files)
 
 .PHONY: sam
-sam: $(sam_files)
+sam: $(sam_files) $(uniq_sam_files)
 
 .PHONY: bam
 bam: $(sort_bam_files)
