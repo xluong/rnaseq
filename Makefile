@@ -19,6 +19,9 @@ fqt_dir = $(base_dir)/THXL_trim
 # Fasta directory
 fa_dir = $(base_dir)/fasta
 
+# Concatenated fasta directory
+fac_dir = $(base_dir)/fasta_cat
+
 # Index directory
 idx_dir = $(base_dir)/indexes
 idx_base = XL_genome
@@ -37,15 +40,20 @@ idxstats_dir = $(base_dir)/idxstats
 
 # Source fastq files
 fq_files = $(wildcard $(fq_dir)/*.fastq.gz)
-basenames = $(foreach x,$(fq_files),$(basename $(basename $(notdir $(x)))))
-fqtgz_files = $(foreach x,$(basenames),$(fqt_dir)/$(x)_trim.fastq.gz)
-fqt_files = $(foreach x,$(basenames),$(fqt_dir)/$(x)_trim.fastq)
-fa_files = $(foreach x,$(basenames),$(fa_dir)/$(x).fasta)
+basenames_ext = $(foreach x,$(fq_files),$(basename $(basename $(notdir $(x)))))
+basenames = $(shell echo $(basenames_ext) | xargs -n1 echo | sed -e "s/_[0-9]\\{1,3\\}$$//g" | sort -u)
+fqtgz_files = $(foreach x,$(basenames_ext),$(fqt_dir)/$(x)_trim.fastq.gz)
+fqt_files = $(foreach x,$(basenames_ext),$(fqt_dir)/$(x)_trim.fastq)
+fa_files = $(foreach x,$(basenames_ext),$(fa_dir)/$(x).fasta)
+fac_files = $(foreach x,$(basenames),$(fa_dir)/$(x).fasta)
 sam_files = $(foreach x,$(basenames),$(sam_dir)/$(x).sam)
 uniq_sam_files = $(foreach x,$(basenames),$(sam_dir)/$(x).unique.sam)
 bam_files = $(foreach x,$(basenames),$(bam_dir)/$(x).bam)
 sort_bam_files = $(foreach x,$(basenames),$(bam_dir)/$(x).sorted.bam)
+uniq_bam_files = $(foreach x,$(basenames),$(bam_dir)/$(x).unique.bam)
+uniq_sort_bam_files = $(foreach x,$(basenames),$(bam_dir)/$(x).unique.sorted.bam)
 idxstats_files = $(foreach x,$(basenames),$(idxstats_dir)/$(x).txt)
+uniq_idxstats_files = $(foreach x,$(basenames),$(idxstats_dir)/$(x).unique.txt)
 idx_files = $(addprefix $(idx_dir)/$(idx_base),$(idx_suffixes))
 
 # Trimmomatic
@@ -80,6 +88,11 @@ $(fa_dir)/%.fasta: $(fqt_dir)/%_trim.fastq
 	mkdir -p $(fa_dir)
 	$(fq2fa) $(fq2fa_args) $< -o $@
 
+# Step 2c: concatenate fasta files together
+$(fac_dir)/%.fasta: $(fa_dir)/%_*.fasta
+	mkdir -p $(fac_dir)
+	cat $^ > $@
+
 # Step 3a: build index
 $(idx_files): $(idx_src)
 	mkdir -p $(idx_dir)
@@ -90,7 +103,7 @@ $(faidx): $(idx_src)
 	$(samtools) faidx $(idx_src)
 
 # Step 4a: map reads
-$(sam_dir)/%.sam: $(fa_dir)/%.fasta $(idx_files)
+$(sam_dir)/%.sam: $(fac_dir)/%.fasta $(idx_files)
 	mkdir -p $(sam_dir)
 	$(bt2) -x $(idx_dir)/$(idx_base) -f -U $< -S $@
 
@@ -109,7 +122,7 @@ $(idxstats_dir)/%.txt: $(bam_dir)/%.sorted.bam
 	mkdir -p $(idxstats_dir)
 	$(samtools) idxstats $< > $@
 
-# Step 4e: generate unique sam files
+# Step 4a2: generate unique sam files
 $(sam_dir)/%.unique.sam: $(sam_dir)/%.sam
 	grep AS: $< | grep -v XS: > $@
 
@@ -117,7 +130,7 @@ $(sam_dir)/%.unique.sam: $(sam_dir)/%.sam
 fqtrim: $(fqt_files)
 
 .PHONY: fa
-fa: $(fa_files)
+fa: $(fac_files)
 
 .PHONY: index
 index: $(idx_files)
@@ -126,11 +139,12 @@ index: $(idx_files)
 sam: $(sam_files) $(uniq_sam_files)
 
 .PHONY: bam
-bam: $(sort_bam_files)
+bam: $(sort_bam_files) $(uniq_sort_bam_files)
 
 .PHONY: idxstats
-idxstats: $(idxstats_files)
+idxstats: $(idxstats_files) $(uniq_idxstats_files)
 
 .PHONY: clean
 clean:
-	rm -rf $(fqt_files) $(fqtgz_files) $(fa_files) $(idx_files) $(faidx) $(sam_files) $(bam_files) $(sort_bam_files)
+	rm -rf $(fqt_files) $(fqtgz_files) $(fa_files) $(fac_files) $(idx_files) $(faidx) $(sam_files) $(bam_files) $(sort_bam_files) \
+	$(uniq_sam_files) $(uniq_bam_files) $(uniq_sort_bam_files) $(idxstats_files) $(uniq_idxstats_files)
